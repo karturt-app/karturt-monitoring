@@ -1,0 +1,1 @@
+{"version":1,"checks":[{"at":"2026-11-20T16:11:48.378Z","results":[{"id":"production","status":"up","reason":"http","code":200,"elapsedMs":625},{"id":"uat","status":"unknown","reason":"restricted","code":302,"elapsedMs":291}]}]}
