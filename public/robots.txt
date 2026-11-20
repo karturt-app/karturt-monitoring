@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://karturt-monitoring.vercel.app/sitemap.xml

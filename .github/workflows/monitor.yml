@@ -1,0 +1,79 @@
+name: Periksa ketersediaan HTTP
+
+on:
+  schedule:
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: homepage-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      results: ${{ steps.publish.outputs.results }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - id: publish
+        name: Periksa dan terbitkan riwayat
+        shell: bash
+        run: |
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          if git show-ref --verify --quiet refs/remotes/origin/status-data; then
+            git worktree add --detach .status refs/remotes/origin/status-data
+          else
+            git worktree add --orphan -b status-data .status
+          fi
+          node scripts/check.mjs .status/status.json
+          git -C .status config user.name 'github-actions[bot]'
+          git -C .status config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C .status add status.json
+          git -C .status commit -m 'Update HTTP status'
+          git -C .status push origin HEAD:refs/heads/status-data
+          node --input-type=module -e "import fs from 'node:fs'; console.log('results=' + JSON.stringify(JSON.parse(fs.readFileSync('.status/status.json', 'utf8')).checks.at(-1)))" >> "$GITHUB_OUTPUT"
+
+  incident-issues:
+    if: vars.ENABLE_INCIDENT_ISSUES == 'true'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      MONITOR_RESULTS: ${{ needs.check.outputs.results }}
+    steps:
+      - name: Sinkronkan issue gangguan
+        shell: bash
+        run: |
+          set -euo pipefail
+          open_issues="$(gh issue list --state open --limit 200 --json number,title)"
+          while IFS= read -r result; do
+            target="$(jq -r '.id' <<< "$result")"
+            case "$target" in
+              production) title='Gangguan HTTP KartuRT Production' ;;
+              uat) title='Gangguan HTTP KartuRT UAT' ;;
+              *) continue ;;
+            esac
+            issue="$(jq -r --arg title "$title" 'map(select(.title == $title)) | first | .number // empty' <<< "$open_issues")"
+            code="$(jq -r '.code // .reason' <<< "$result")"
+            state="$(jq -r '.status' <<< "$result")"
+            checked_at="$(jq -r '.at' <<< "$MONITOR_RESULTS")"
+            if [[ "$state" == down && -z "$issue" ]]; then
+              gh issue create --title "$title" --body "Pemeriksaan GET homepage pada $checked_at melaporkan DOWN ($code)."
+            elif [[ "$state" == up && -n "$issue" ]]; then
+              gh issue close "$issue" --comment "Pemeriksaan GET homepage pada $checked_at kembali UP (HTTP $code)."
+            fi
+          done < <(jq -c '.results[]' <<< "$MONITOR_RESULTS")

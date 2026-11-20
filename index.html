@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      try {
+        const theme = localStorage.getItem('karturt-monitoring-theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch {}
+    </script>
+    <title>Status Layanan KartuRT</title>
+    <meta name="description" content="Pantau ketersediaan HTTP Production dan UAT KartuRT, waktu respons, dan riwayat gangguan tujuh hari.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://karturt-monitoring.vercel.app/">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:title" content="Status Layanan KartuRT">
+    <meta property="og:description" content="Ketersediaan HTTP, waktu respons, dan riwayat gangguan KartuRT.">
+    <meta property="og:url" content="https://karturt-monitoring.vercel.app/">
+    <meta property="og:image" content="https://karturt-monitoring.vercel.app/social.png">
+    <meta property="og:image:alt" content="KartuRT Monitoring, status layanan">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Status Layanan KartuRT">
+    <meta name="twitter:description" content="Ketersediaan HTTP, waktu respons, dan riwayat gangguan KartuRT.">
+    <meta name="twitter:image" content="https://karturt-monitoring.vercel.app/social.png">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "KartuRT Monitoring",
+        "url": "https://karturt-monitoring.vercel.app/",
+        "inLanguage": "id",
+        "publisher": {
+          "@type": "Organization",
+          "name": "KartuRT",
+          "url": "https://karturt.vercel.app/"
+        }
+      }
+    </script>
+    <style>
+      html { background: #101513; color: #f0f4eb }
+      html[data-theme="light"] { background: #f1f4ec; color: #18251d }
+    </style>
+  </head>
+  <body>
+    <div id="root"><p role="status">Memuat dasbor ketersediaan HTTP KartuRT…</p></div>
+    <noscript>Aktifkan JavaScript untuk menampilkan status terbaru.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
